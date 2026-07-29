@@ -6,12 +6,12 @@ import { SplitText, Reveal } from "@/components/site/motion-primitives";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-type Search = { category: "all" | "men" | "women" | "unisex" };
+type Category = "all" | "men" | "women" | "unisex";
+type Search = { category?: Category };
 
 export const Route = createFileRoute("/shop")({
-  validateSearch: (s: Record<string, unknown>): Search => ({
-    category: (["all", "men", "women", "unisex"].includes(String(s.category)) ? s.category : "all") as Search["category"],
-  }),
+  validateSearch: (s: Record<string, unknown>): Search =>
+    ["men", "women", "unisex"].includes(String(s.category)) ? { category: s.category as Category } : {},
   head: () => ({
     meta: [
       { title: "Shop Chapter IV — NOCTVRNE" },
@@ -36,7 +36,7 @@ const SORTS = [
 ] as const;
 
 function Shop() {
-  const { category } = Route.useSearch();
+  const { category = "all" } = Route.useSearch();
   const navigate = Route.useNavigate();
   const [maxPrice, setMaxPrice] = useState(1500);
   const [size, setSize] = useState<string | null>(null);
