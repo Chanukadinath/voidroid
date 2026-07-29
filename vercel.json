@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "outputDirectory": ".output/public",
+  "build": {
+    "env": {}
+  }
+}
