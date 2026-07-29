@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Heart, Minus, Plus, Truck } from "lucide-react";
-import { getProduct, money, products } from "@/data/products";
+import { getProduct, money, products, type Product } from "@/data/products";
 import { useShop } from "@/store/shop";
 import { ProductCard } from "@/components/site/product-card";
 import { Magnetic, Reveal, SplitText, EASE } from "@/components/site/motion-primitives";
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/product/$slug")({
 });
 
 function ProductPage() {
-  const { product } = Route.useLoaderData();
+  const { product } = Route.useLoaderData() as { product: Product };
   const [active, setActive] = useState(0);
   const [size, setSize] = useState<string | null>(null);
   const [color, setColor] = useState(product.colors[0]);
