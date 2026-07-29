@@ -83,14 +83,52 @@ function Checkout() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -30 }}
               transition={{ duration: 0.5, ease: EASE }}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (step < 2) setStep(step + 1);
-                  else {
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = new FormData(e.currentTarget as HTMLFormElement);
+                    if (step < 2) return setStep(step + 1);
+
+                    // Final step: clear cart + mark done
+                    const orderPayload = {
+                      name: String(form.get('name') || ''),
+                      email: String(form.get('email') || ''),
+                      address: String(form.get('address') || ''),
+                      city: String(form.get('city') || ''),
+                      zip: String(form.get('zip') || ''),
+                      billing_name: String(form.get('bname') || ''),
+                      billing_address: String(form.get('baddress') || ''),
+                      country: String(form.get('country') || ''),
+                      phone: String(form.get('phone') || ''),
+                      lines: lines,
+                      subtotal: cartSubtotal(lines),
+                      discount: cartSubtotal(lines) * discountRate(coupon),
+                      shipping: cartSubtotal(lines) > 500 || cartSubtotal(lines) === 0 ? 0 : 15,
+                      total: cartSubtotal(lines) - cartSubtotal(lines) * discountRate(coupon) + (cartSubtotal(lines) > 500 || cartSubtotal(lines) === 0 ? 0 : 15),
+                      created_at: new Date().toISOString(),
+                    };
+
+                    // Post to Google Sheets webhook if configured
+                    const SHEETS_WEBHOOK = import.meta.env.VITE_SHEETS_WEBHOOK as string | undefined;
+                    const SHEETS_SECRET = import.meta.env.VITE_SHEETS_SECRET as string | undefined;
+                    if (SHEETS_WEBHOOK) {
+                      try {
+                        await fetch(SHEETS_WEBHOOK, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            ...(SHEETS_SECRET ? { 'x-sheets-secret': SHEETS_SECRET } : {}),
+                          },
+                          body: JSON.stringify(orderPayload),
+                        });
+                      } catch (err) {
+                        // swallow — order UI should proceed even if webhook fails
+                        console.error('Sheets webhook failed', err);
+                      }
+                    }
+
                     clear();
                     setDone(true);
-                  }
-                }}
+                  }}
               className="space-y-5"
             >
               {step === 0 && (
