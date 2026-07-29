@@ -56,18 +56,35 @@ function Hero() {
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.25]);
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
   const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const [videoAvailable, setVideoAvailable] = useState(true);
 
   return (
     <section ref={ref} className="relative h-[100svh] overflow-hidden bg-black">
-      <motion.img
-        src={heroImg}
-        alt="Model wearing the Monolith hooded sweat in a concrete hall"
-        width={1920}
-        height={1280}
-        fetchPriority="high"
-        style={{ scale, y }}
-        className="absolute inset-0 h-full w-full object-cover opacity-90"
-      />
+      {videoAvailable ? (
+        <motion.video
+          src="/hero.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          width={1920}
+          height={1280}
+          fetchPriority="high"
+          style={{ scale, y }}
+          className="absolute inset-0 h-full w-full object-cover opacity-90"
+          onError={() => setVideoAvailable(false)}
+        />
+      ) : (
+        <motion.img
+          src={heroImg}
+          alt="Model wearing the Monolith hooded sweat in a concrete hall"
+          width={1920}
+          height={1280}
+          fetchPriority="high"
+          style={{ scale, y }}
+          className="absolute inset-0 h-full w-full object-cover opacity-90"
+        />
+      )}
       <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/20 to-black/80" />
 
       <motion.div style={{ opacity: fade }} className="relative flex h-full flex-col justify-end px-5 pb-24 md:px-10 md:pb-20">

@@ -6,6 +6,8 @@ import { cartSubtotal, discountRate, useShop } from "@/store/shop";
 import { money } from "@/data/products";
 import { EASE, SplitText } from "@/components/site/motion-primitives";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -83,14 +85,41 @@ function Checkout() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -30 }}
               transition={{ duration: 0.5, ease: EASE }}
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (step < 2) setStep(step + 1);
-                else {
-                  clear();
-                  setDone(true);
-                }
-              }}
+              onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = new FormData(e.currentTarget as HTMLFormElement);
+                  if (step < 2) return setStep(step + 1);
+
+                  // final step: place order and send to Supabase
+                  const order = {
+                    name: String(form.get('name') || ''),
+                    email: String(form.get('email') || ''),
+                    address: String(form.get('address') || ''),
+                    city: String(form.get('city') || ''),
+                    zip: String(form.get('zip') || ''),
+                    billing_name: String(form.get('bname') || ''),
+                    billing_address: String(form.get('baddress') || ''),
+                    country: String(form.get('country') || ''),
+                    phone: String(form.get('phone') || ''),
+                    lines: JSON.stringify(lines),
+                    subtotal: Number(cartSubtotal(lines)),
+                    discount: Number(cartSubtotal(lines) * discountRate(coupon)),
+                    shipping: Number(cartSubtotal(lines) > 500 || cartSubtotal(lines) === 0 ? 0 : 15),
+                    total: Number(cartSubtotal(lines) - cartSubtotal(lines) * discountRate(coupon) + (cartSubtotal(lines) > 500 || cartSubtotal(lines) === 0 ? 0 : 15)),
+                    status: 'pending',
+                  };
+
+                  try {
+                    const { data, error } = await supabase.from('orders').insert([order]);
+                    if (error) throw error;
+                    clear();
+                    setDone(true);
+                    toast('Order placed', { description: 'We recorded your order.' });
+                  } catch (err: any) {
+                    console.error('Order insert failed', err);
+                    toast('Order failed', { description: err?.message || String(err) });
+                  }
+                }}
               className="space-y-5"
             >
               {step === 0 && (
